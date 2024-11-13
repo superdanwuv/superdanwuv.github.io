@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">git push -u origin main
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>루엔 귀여워</title>
+</head>
+<body>
+    <h1>루엔 귀여워</h1>
+    <button onclick="addText()">루엔 귀여워 추가하기</button>
+    <div id="textContainer"></div>
+
+    <script>
+        function addText() {
+            const container = document.getElementById("textContainer");
+            const newText = document.createElement("p");
+            newText.innerText = "루엔 귀여워";
+            container.appendChild(newText);
+        }
+    </script>
+</body>
+</html>
