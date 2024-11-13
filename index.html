@@ -3,32 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루엔 귀여워 클릭 카운터</title>
+    <title>루엔 귀여워</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
 </head>
 <body>
     <h1>루엔 귀여워</h1>
+
+    <!-- 이미지 표시 (기본적으로 입 닫고 있는 이미지) -->
+    <img id="characterImage" src="closed-mouth-image.jpg" alt="루엔" onclick="changeImage()" style="width: 200px; height: auto;">
+    
     <button onclick="addText()">루엔 귀여워 추가하기</button>
     <div id="textContainer"></div>
-    <br>
-    <h2>전체 클릭 수: <span id="clickCount">0</span></h2>
+    <h2>총 클릭 횟수: <span id="clickCount">0</span></h2>
 
     <script>
-        // 클릭 수 추적 변수
-        let clickCount = 0;
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFHb1uwY-g3I3uyhjkJ_Dz7Njy6s-KWbA",  // Firebase 콘솔에서 가져온 API 키
+            authDomain: "luenkawaii-571b4.firebaseapp.com",  // Firebase 콘솔에서 가져온 Auth 도메인
+            databaseURL: "https://luenkawaii-571b4-default-rtdb.firebaseio.com",  // Firebase 콘솔에서 가져온 DB URL
+            projectId: "luenkawaii-571b4",  // Firebase 콘솔에서 가져온 프로젝트 ID
+            storageBucket: "luenkawaii-571b4.firebasestorage.app",  // Firebase 콘솔에서 가져온 스토리지 버킷
+            messagingSenderId: "829994358358",  // Firebase 콘솔에서 가져온 메시징 ID
+            appId: "1:829994358358:web:d907dc0d642ed038e00df7"  // Firebase 콘솔에서 가져온 App ID
+        };
 
+        // Firebase 초기화
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(app);
+
+        // 클릭 횟수 가져오기
+        const clickCountRef = database.ref('clickCount');
+        clickCountRef.on('value', function(snapshot) {
+            document.getElementById("clickCount").innerText = snapshot.val();
+        });
+
+        // 텍스트 추가 기능
         function addText() {
             const container = document.getElementById("textContainer");
             const newText = document.createElement("p");
             newText.innerText = "루엔 귀여워";
             container.appendChild(newText);
-            
-            // 클릭 수 증가
-            clickCount++;
-            
-            // 클릭 수 화면에 표시
-            document.getElementById("clickCount").innerText = clickCount;
+
+            // 클릭 횟수 업데이트
+            clickCountRef.transaction(function(currentValue) {
+                return (currentValue || 0) + 1;  // 기존 값에 1을 더함
+            });
+        }
+
+        // 이미지 변경 기능
+        function changeImage() {
+            const image = document.getElementById("characterImage");
+
+            // 현재 이미지가 'closed-mouth-image.jpg'일 경우, 'open-mouth-image.jpg'로 변경
+            if (image.src.includes("closed-mouth-image.jpg")) {
+                image.src = "file:///C:/Users/user/Documents/%EC%B9%B4%EC%B9%B4%EC%98%A4%ED%86%A1%20%EB%B0%9B%EC%9D%80%20%ED%8C%8C%EC%9D%BC/KakaoTalk_20241113_200114477.jpg";  // 입 벌린 이미지
+            } else {
+                image.src = "file:///C:/Users/user/Documents/%EC%B9%B4%EC%B9%B4%EC%98%A4%ED%86%A1%20%EB%B0%9B%EC%9D%80%20%ED%8C%8C%EC%9D%BC/KakaoTalk_20241113_200114477_01.jpg";  // 입 닫은 이미지
+            }
         }
     </script>
 </body>
 </html>
-
