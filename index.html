@@ -1,23 +1,34 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루엔 귀여워</title>
+    <title>루엔 귀여워 클릭 카운터</title>
 </head>
 <body>
     <h1>루엔 귀여워</h1>
     <button onclick="addText()">루엔 귀여워 추가하기</button>
     <div id="textContainer"></div>
+    <br>
+    <h2>전체 클릭 수: <span id="clickCount">0</span></h2>
 
     <script>
+        // 클릭 수 추적 변수
+        let clickCount = 0;
+
         function addText() {
             const container = document.getElementById("textContainer");
             const newText = document.createElement("p");
             newText.innerText = "루엔 귀여워";
             container.appendChild(newText);
+            
+            // 클릭 수 증가
+            clickCount++;
+            
+            // 클릭 수 화면에 표시
+            document.getElementById("clickCount").innerText = clickCount;
         }
     </script>
 </body>
 </html>
+
