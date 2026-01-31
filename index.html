@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>자막 프리뷰어 - 파싱 강화</title>
+    <title>자막 프리뷰어 - 모바일 최적화</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
@@ -13,22 +13,28 @@
             background-color: #1a1a1a;
             color: #e5e5e5;
             margin: 0;
+            padding: 0;
             overflow: hidden;
+            height: 100vh;
+            /* 모바일 브라우저 주소창 대응 */
+            height: -webkit-fill-available;
         }
 
         .editor-container {
             height: 100vh;
+            height: 100svh; /* 최신 브라우저용 가용 높이 */
             display: flex;
             flex-direction: column;
         }
 
+        /* PC 버전 (화면이 넓을 때) */
         @media (min-width: 768px) {
             .editor-container {
                 flex-direction: row;
             }
             .input-section {
-                width: 400px;
-                height: 100%;
+                width: 380px;
+                height: 100% !important;
                 border-right: 1px solid #404040;
                 border-bottom: none;
             }
@@ -38,10 +44,12 @@
             background-color: #262626;
             display: flex;
             flex-direction: column;
-            padding: 1rem;
-            z-index: 10;
-            height: 40%;
+            padding: 0.75rem;
+            z-index: 20;
+            /* 모바일에서 입력창 높이를 조금 줄여 미리보기 공간 확보 */
+            height: 35%; 
             border-bottom: 1px solid #404040;
+            flex-shrink: 0;
         }
 
         .preview-section {
@@ -52,6 +60,8 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            /* 모바일에서 아래쪽 여백 확보 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         textarea {
@@ -64,26 +74,29 @@
             border: 1px solid #404040;
             resize: none;
             outline: none;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            font-size: 0.8rem;
+            line-height: 1.4;
         }
 
         #subtitle-display {
             color: white;
-            font-size: 1.8rem;
+            font-size: 1.4rem; /* 모바일에서 약간 작게 시작 */
             text-align: center;
-            text-shadow: 2px 2px 10px rgba(0, 0, 0, 1);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 1);
             max-width: 90%;
             line-height: 1.4;
             transition: opacity 0.2s ease;
             pointer-events: none;
             white-space: pre-wrap;
             font-weight: 700;
+            z-index: 5;
+            margin-bottom: 2rem; /* 컨트롤바와 겹치지 않게 */
         }
 
         @media (min-width: 768px) {
             #subtitle-display {
-                font-size: 3rem;
+                font-size: 2.5rem;
+                margin-bottom: 0;
             }
         }
 
@@ -91,98 +104,109 @@
             font-size: 6vw;
         }
 
+        /* 컨트롤바 위치 및 크기 조정 */
         .controls {
             position: absolute;
-            bottom: 1.5rem;
-            background: rgba(40, 40, 40, 0.85);
-            padding: 0.6rem 1rem;
-            border-radius: 9999px;
+            bottom: 1rem;
+            background: rgba(45, 45, 45, 0.9);
+            padding: 0.5rem 0.8rem;
+            border-radius: 12px;
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1);
-            transition: opacity 0.3s;
-            width: 90%;
-            max-width: 500px;
+            width: 92%;
+            max-width: 480px;
             justify-content: space-between;
+            z-index: 15;
         }
 
         .preview-section.hide-cursor .controls {
             opacity: 0;
+            pointer-events: none;
         }
 
         .time-display {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #fbbf24;
-            min-width: 65px;
+            min-width: 60px;
             text-align: right;
         }
 
-        button:active {
-            transform: scale(0.92);
+        /* 터치 영역 최적화 */
+        button {
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
 
 <div class="editor-container">
+    <!-- 자막 편집 섹션 -->
     <div class="input-section">
-        <div class="flex justify-between items-center mb-2">
-            <h1 class="text-lg font-bold text-indigo-400">Subtitle Editor</h1>
-            <div id="parse-status" class="text-[10px] text-gray-400 bg-black/20 px-2 py-1 rounded-full">
+        <div class="flex justify-between items-center mb-1">
+            <h1 class="text-sm font-bold text-indigo-400">Subtitle Editor</h1>
+            <div id="parse-status" class="text-[10px] text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">
                 <span class="status-dot bg-yellow-500"></span> 대기 중
             </div>
         </div>
         
-        <textarea id="vtt-input" spellcheck="false" placeholder="자막을 입력하세요...">WEBVTT
+        <textarea id="vtt-input" spellcheck="false" placeholder="여기에 자막을 붙여넣으세요...">WEBVTT
 
 1
-00:00:00.583 --> 00:00:01.666
+00:00:00.500 --> 00:00:02.500
 
-<b>좋은 밤</b>
+모바일 레이아웃이
+최적화되었습니다.
 
 2
-00:00:02.000 --> 00:00:04.500
+00:00:03.000 --> 00:00:06.000
 
-줄바꿈이 많아도
-이제 잘 작동합니다!</textarea>
+이제 버튼들이 화면 안에
+잘 보일 거예요!</textarea>
 
-        <div class="mt-2 flex gap-2">
-            <button id="apply-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg font-bold text-sm shadow-lg">
+        <div class="mt-2">
+            <button id="apply-btn" class="w-full bg-indigo-600 active:bg-indigo-800 text-white py-2 rounded-lg font-bold text-sm shadow-md transition-colors">
                 적용하기
             </button>
         </div>
     </div>
 
+    <!-- 미리보기 섹션 -->
     <div class="preview-section" id="fullscreen-target">
         <div id="subtitle-display"></div>
 
-        <div class="controls">
-            <button id="play-pause" class="text-white">
-                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+        <div class="controls" id="ui-controls">
+            <!-- 재생 버튼 -->
+            <button id="play-pause" class="hover:text-indigo-400">
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
                     <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
                 </svg>
-                <svg id="pause-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <svg id="pause-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>
                 </svg>
             </button>
             
-            <input type="range" id="seek-bar" class="accent-indigo-500" value="0" step="0.05">
+            <!-- 진행 바 -->
+            <input type="range" id="seek-bar" class="accent-indigo-500" value="0" step="0.01" min="0">
             
+            <!-- 시간 정보 -->
             <div class="time-display" id="time-display">00:00.0</div>
             
-            <button id="fullscreen-btn" class="text-white ml-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <!-- 전체화면 -->
+            <button id="fullscreen-btn" class="hover:text-indigo-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
                 </svg>
             </button>
@@ -211,13 +235,11 @@
     let maxTime = 10;
     let hideTimer;
 
-    // 강력한 자막 파서: 엔터가 아무리 많아도 시간대만 발견하면 그룹화함
+    // 자막 파싱 함수 (강화형)
     function parseSubtitlesRobust(text) {
         const lines = text.split('\n');
         const results = [];
         let currentCue = null;
-        
-        // 시간 형식을 찾는 정규식 (00:00:00.000 또는 00:00:00,000)
         const timeRegex = /(\d{2}:\d{2}:\d{2}[.,]\d{3}) --> (\d{2}:\d{2}:\d{2}[.,]\d{3})/;
 
         for (let i = 0; i < lines.length; i++) {
@@ -225,7 +247,6 @@
             const timeMatch = line.match(timeRegex);
 
             if (timeMatch) {
-                // 새로운 시간대를 찾으면 이전 자막 저장 후 새 자막 생성
                 if (currentCue) results.push(currentCue);
                 currentCue = {
                     start: timeToSeconds(timeMatch[1]),
@@ -233,15 +254,12 @@
                     text: ""
                 };
             } else if (currentCue && line !== "") {
-                // 현재 자막 묶음이 진행 중이고 빈 줄이 아니면 텍스트로 추가
-                // 번호만 있는 줄(예: "1")은 제외
                 if (!/^\d+$/.test(line) && line.toUpperCase() !== 'WEBVTT') {
                     currentCue.text += (currentCue.text ? "\n" : "") + line;
                 }
             }
         }
         if (currentCue) results.push(currentCue);
-        
         return results.filter(c => c.text !== "").sort((a, b) => a.start - b.start);
     }
 
@@ -273,20 +291,20 @@
         seekBar.value = currentTime;
     }
 
-    function step(timestamp) {
+    function animate(timestamp) {
         if (!isPlaying) return;
         if (!lastTimestamp) lastTimestamp = timestamp;
-        const progress = (timestamp - lastTimestamp) / 1000;
+        const delta = (timestamp - lastTimestamp) / 1000;
         lastTimestamp = timestamp;
 
-        currentTime += progress;
+        currentTime += delta;
         if (currentTime > maxTime) {
             currentTime = 0;
             isPlaying = false;
             updatePlayStatus();
         }
         updateDisplay();
-        requestAnimationFrame(step);
+        requestAnimationFrame(animate);
     }
 
     function updatePlayStatus() {
@@ -305,19 +323,27 @@
         updatePlayStatus();
         if (isPlaying) {
             lastTimestamp = 0;
-            requestAnimationFrame(step);
+            requestAnimationFrame(animate);
         }
     }
 
+    // 모바일 전체화면 처리
     fullscreenBtn.onclick = () => {
         if (!document.fullscreenElement) {
-            fullscreenTarget.requestFullscreen();
+            if (fullscreenTarget.requestFullscreen) {
+                fullscreenTarget.requestFullscreen();
+            } else if (fullscreenTarget.webkitRequestFullscreen) {
+                fullscreenTarget.webkitRequestFullscreen(); // iOS/Safari 대응
+            }
         } else {
             document.exitFullscreen();
         }
     };
 
-    playPauseBtn.onclick = togglePlay;
+    playPauseBtn.onclick = (e) => {
+        e.stopPropagation();
+        togglePlay();
+    };
 
     seekBar.oninput = (e) => {
         currentTime = parseFloat(e.target.value);
@@ -345,14 +371,35 @@
             updateDisplay();
         } else {
             statusDot.className = "status-dot bg-red-500";
-            statusText.innerHTML = `<span class="status-dot bg-red-500"></span> 형식 오류 (시간 체크)`;
+            statusText.innerHTML = `<span class="status-dot bg-red-500"></span> 자막 형식 확인 필요`;
         }
     };
 
-    // 초기 적용
-    applyBtn.click();
+    // 화면 터치 시 컨트롤바 표시/숨김 (전체화면 모드 등에서 유용)
+    fullscreenTarget.onclick = () => {
+        fullscreenTarget.classList.remove('hide-cursor');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            if (isPlaying) fullscreenTarget.classList.add('hide-cursor');
+        }, 3000);
+    };
+
+    // 키보드 단축키
+    document.addEventListener('keydown', (e) => {
+        if (document.activeElement === vttInput) return;
+        if (e.code === 'Space') {
+            e.preventDefault();
+            togglePlay();
+        }
+    });
+
+    // 초기 실행
+    window.onload = () => {
+        applyBtn.click();
+    };
 </script>
 
 </body>
 </html>
+
 
